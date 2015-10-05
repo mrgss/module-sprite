@@ -11,4 +11,6 @@
 
 
 #endif	/* MRGSS_SPRITE_H */
+void
+mrb_mrgss_sprite_gem_init(mrb_state *mrb); 
 
