@@ -14,7 +14,7 @@ initialize(mrb_state *mrb, mrb_value self) {
     mrb_int x, y;
     mrb_value tex;
     mrb_value view;
-    mrb_get_args(mrb, "iiooo", &x, &y, &tex, &view);
+    mrb_get_args(mrb, "iioo", &x, &y, &tex, &view);
     if (mrgss_object_is_a(mrb, tex, "Texture") && mrgss_object_is_a(mrb, view, "Viewport")) {
         mrgss_iv_create(mrb, self, "@x", mrb_fixnum_value(x));
         mrgss_iv_create(mrb, self, "@y", mrb_fixnum_value(y));
