@@ -1,9 +1,9 @@
 #include <mruby.h>
-#include <mrgss/mrgss-sprite.h>
+#include <mrgss/mrgss_sprite.h>
 
 void
 mrb_mrgss_sprite_gem_init(mrb_state *mrb) {
-	mrgss_init_sprite(mrb);
+	mrgss_sprite_init(mrb);
 }
 
 void
