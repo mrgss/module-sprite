@@ -12,7 +12,7 @@
 #endif
 #include <GL/glew.h>
 #include <mruby.h>
-#include <SDL2/SDL.h>
+#include <SDL/SDL.h>
 #include <kazmath/kazmath.h>
 
 #ifdef	__cplusplus

@@ -2,8 +2,8 @@
 #define GLEW_STATIC
 #endif
 #include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
 #include <mruby.h>
 #include <mruby/class.h>
 #include <mruby/array.h>
