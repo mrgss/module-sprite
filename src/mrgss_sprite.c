@@ -13,6 +13,7 @@
 #include <mrgss/mrgss_texture.h>
 #include <mrgss/mrgss_shader.h>
 #include <mrgss/mrgss_sprite.h>
+#include <SDL2/SDL_rect.h>
 
 
 static GLuint indices[6] = {0, 1, 2, 2, 3, 0};
@@ -65,6 +66,8 @@ struct mrb_data_type const mrbal_sprite_data_type = {"Sprite", sprite_free};
 static mrb_value initialize(mrb_state *mrb, mrb_value self) {
     mrgss_sprite *sprite;
     mrgss_texture *tex;
+    struct RClass *type;
+    mrb_value params[4];
     mrb_value texture, viewport;
     mrb_get_args(mrb, "oo", &texture, &viewport);
     sprite = mrb_malloc(mrb, sizeof (mrgss_sprite));
@@ -72,17 +75,16 @@ static mrb_value initialize(mrb_state *mrb, mrb_value self) {
     mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@viewport"), viewport);
     mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@texture"), texture);
     mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@shader"), mrb_gv_get(mrb, mrb_intern_lit(mrb, "default_shader")));
+    
     glGenVertexArrays(1, &sprite->vao);
     glGenBuffers(1, &sprite->vbo);
-
-    sprite->z = 0;
-    sprite->x = 0;
-    sprite->y = 0;
-    sprite->src_rect = mrb_malloc(mrb, sizeof (SDL_Rect));
-    sprite->src_rect->x = 0;
-    sprite->src_rect->y = 0;
-    sprite->src_rect->h = tex->h;
-    sprite->src_rect->w = tex->w;
+    params[0] = mrb_fixnum_value(0);
+    params[1] = mrb_fixnum_value(0);
+    params[2] = mrb_fixnum_value(tex->w);
+    params[3] = mrb_fixnum_value(tex->h);
+    type = mrb_class_get_under(mrb, mrgss_module(), "Rect");
+    
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@src_rect"), mrb_obj_new(mrb, type, 4, params));
     calculate_vertex_position(sprite->vertex_buff, 0, 0, tex->w, tex->h);
     calculate_texture_coords(sprite->texture_buff, 0, 0, tex->w, tex->h, tex->w, tex->h);
     glBindBuffer(GL_ARRAY_BUFFER, sprite->vbo);
@@ -107,7 +109,8 @@ static mrb_value set_x(mrb_state *mrb, mrb_value self) {
     mrb_get_args(mrb, "i", &x);
     spr = DATA_PTR(self);
     spr->x = x;
-    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, spr->src_rect->w, spr->src_rect->h);
+    SDL_Rect *rect = DATA_PTR(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@src_rect")));
+    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, rect->w, rect->h);
     glBindBuffer(GL_ARRAY_BUFFER, spr->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof (GL_FLOAT) * 8, spr->vertex_buff);
     return mrb_fixnum_value(spr->x);
@@ -124,23 +127,15 @@ static mrb_value set_y(mrb_state *mrb, mrb_value self) {
     mrb_get_args(mrb, "i", &y);
     spr = DATA_PTR(self);
     spr->y = y;
-    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, spr->src_rect->w, spr->src_rect->h);
+    SDL_Rect *rect = DATA_PTR(mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@src_rect")));
+    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, rect->w, rect->h);
     glBindBuffer(GL_ARRAY_BUFFER, spr->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof (GL_FLOAT) * 8, spr->vertex_buff);
     return mrb_fixnum_value(spr->y);
 }
 
 static mrb_value get_rect(mrb_state *mrb, mrb_value self) {
-    mrgss_sprite *spr;
-    mrb_value params[4];
-    struct RClass *type;
-    spr = DATA_PTR(self);
-    type = mrb_class_get_under(mrb, mrgss_module(), "Rect");
-    params[0] = mrb_fixnum_value(spr->src_rect->x);
-    params[1] = mrb_fixnum_value(spr->src_rect->y);
-    params[2] = mrb_fixnum_value(spr->src_rect->w);
-    params[3] = mrb_fixnum_value(spr->src_rect->h);
-    return mrb_obj_new(mrb, type, 4, params);
+    return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@src_rect"));
 }
 
 static mrb_value set_rect(mrb_state *mrb, mrb_value self) {
@@ -149,12 +144,13 @@ static mrb_value set_rect(mrb_state *mrb, mrb_value self) {
     mrgss_texture *tex;
     mrgss_sprite *spr;
     mrb_get_args(mrb, "o", &rect);
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@src_rect"), rect);
     spr = DATA_PTR(self);
-    spr->src_rect = DATA_PTR(rect);
+    SDL_Rect *rectangle = DATA_PTR(rect);
     texture = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@texture"));
     tex = DATA_PTR(texture);
-    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, spr->src_rect->w, spr->src_rect->h);
-    calculate_texture_coords(spr->texture_buff, spr->src_rect->x, spr->src_rect->y, spr->src_rect->w, spr->src_rect->h, tex->w, tex->h);
+    calculate_vertex_position(spr->vertex_buff, spr->x, spr->y, rectangle->w, rectangle->h);
+    calculate_texture_coords(spr->texture_buff, rectangle->x, rectangle->y, rectangle->w, rectangle->h, tex->w, tex->h);
     glBindBuffer(GL_ARRAY_BUFFER, spr->vbo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof (GL_FLOAT) * 8, spr->vertex_buff);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof (GL_FLOAT) * 8, sizeof (GL_FLOAT) * 8, spr->texture_buff);

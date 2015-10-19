@@ -26,8 +26,6 @@ extern "C" {
         GLuint vao;
         GLuint vbo;
         mrb_int x, y, z;
-        SDL_Rect *src_rect;
-        
     } mrgss_sprite;
 
 
